@@ -1,0 +1,27 @@
+apiVersion: kubegres.reactive-tech.io/v1
+kind: Kubegres
+metadata:
+  name: {{ kubegres_name }}
+  namespace: {{ kubegres_namespace }}
+  annotations: {{ kubegres_annotations }}
+spec:
+   replicas: {{ kubegres_replicas }}
+   image: {{ kubegres_image }}
+   port: {{ kubegres_port }}
+   imagePullSecrets:
+      - name: {{ kubegres_image_pull_secret }}
+   database:
+      size: {{ kubegres_database_size }}
+      storageClassName: {{ kubegres_storage_class_name }}
+      volumeMount: {{ kubegres_volume_mount }}
+   customConfig: {{ kubegres_custom_config }}
+   failover:
+      isDisabled: {{ kubegres_failover_is_disabled }}
+      promotePod: {{ kubegres_failover_promote_pod }}
+   backup: {{ kubegres_backup_volume_mount }}
+   securityContext: {{ kubegres_security_context }}
+   resources: {{ kubegres_resources }}
+   scheduler: {{ kubegres_scheduler }}
+   volume: {{ kubegres_volumes }}
+   probe: {{ kubegres_probe }}
+   env: {{ kubegres_env }}

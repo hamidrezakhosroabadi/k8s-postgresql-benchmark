@@ -1,0 +1,199 @@
+#Is required: 	Yes
+#Type: 	string
+#The unique name of a Kubegres resource in Kubernetes. It defines the unique name of a PostgreSql cluster, which is "mypostgres" for this example.
+#Kubegres operator allows creating as many clusters of Postgres as a given infrastructure can handle as long as each cluster's name is unique.
+kubegres_name: postgres-cluster
+
+#Is required: 	No
+#Default value: 	default
+#Type: 	string
+#The namespace where the Kubegres resource will be created and a PostgreSql cluster will be deployed.
+kubegres_namespace:
+
+#Is required: 	No
+#Type: 	map[string]string
+#The annotations to pass to the created Pods and StatefulSets. We can set as many annotations as needed.
+#As an example, in the YAML above we set the annotations:
+kubegres_annotations:
+#- imageregistry: "https://hub.docker.com/
+#- nginx.ingress.kubernetes.io/affinity: cookie
+
+#Is required: 	Yes
+#Type: 	int32
+#It defines the number of PostgreSql instances (or Pods) to deploy in a cluster.
+#For example, if set to '3', Kubegres deploys 1 Primary Pod and 2 Replica Pods. If set to '1', it will only create 1 Primary Pod without creating any Replica Pods.
+kubegres_replicas: 3
+
+#Is required: 	Yes
+#Type: 	string
+#The name of the Postgres Docker image. Kubegres operator does not ship with a custom Docker image. It expects either a Postgres Docker official image (version 12.4 or higher) or any compatible image.
+kubegres_image: postgres:14.1
+
+#Is required: 	No
+#Default value: 	5432
+#Type: 	int32
+#The port exposed by the Postgres docker container.
+kubegres_port: #5432
+
+#Is required: 	No
+#Type: 	Array of LocalObjectReference
+#It allows pulling custom Postgres images from a private repo. The images have to be compatible with a Postgres Docker official image (version 12.4 or higher).
+kubegres_image_pull_secret:
+#- name: my-private-docker-repo-secret
+
+#Is required: 	Yes
+#Type: 	string
+#The size of each Postgres Pod's database in a cluster. We use "Mi" for Megabyte and "Gi" for Gigabyte.
+kubegres_database_size: 500Mi
+
+#Is required: 	No
+#Default value: 	The name of the default Storage-Class in the Kubernetes cluster
+#Type: 	string
+#It allows setting the Storage-Class' name which will be used to store the PostgreSql database.
+#If it is not set, Kubegres operator uses the default Storage-Class available in a Kubernetes cluster.
+#Once the Storage-Class is assigned, Kubernetes automatically provisions a PV and a PVC for each Postgres Pod using the Storage-Class.
+kubegres_storage_class_name: #standard
+
+#Is required: 	No
+#Default value: 	/var/lib/postgresql/data
+#Type: 	string
+#It defines the path in the Postgres container where the database folder 'pgdata' is mounted. The mount will be physically located in the volume (PVC) backed by a Storage-Class (as defined in the above field 'database.storageClassName').
+kubegres_volume_mount: #/var/lib/postgresql/data
+
+#Is required: 	No
+#Default value: 	base-kubepostgres-config
+#Type: 	string
+#It allows setting the name of a ConfigMap which contains the configs files and their contents required by Kubegres.
+kubegres_custom_config: #base-kubepostgres-config
+
+#Is required: 	No
+#Default value: 	false
+#Type: 	bool
+#
+#It disables the automatic failover feature for a cluster of PostgreSql.
+#If it is set to true and if a Primary or Replica PostgreSql instance is not available then Kubegres will not attempt to failover and fix the cluster.
+#This option can be useful when manually maintaining a node (e.g. restarting it, patching it, ...) and when we do not want Kubegres to automatically failover a Primary or Replica instances during a maintenance.
+kubegres_failover_is_disabled: #false
+
+#Is required: 	No
+#Type: 	string
+#It allows to manually promote a Replica PostgreSql Pod as a Primary Pod.
+#It expects the name of a Replica Pod that we would like to promote as a Primary.
+#This option is independent of the value of the above field "failover.isDisabled". It is always possible to manually promote a Pod, whether "failover.isDisabled" is set to true or to false.
+kubegres_failover_promote_pod: #mypostgres-2-0
+
+#Is required: 	No
+#Type: 	string
+#It expects a Cron format defining how often a back-up should happen.
+kubegres_backup_schedule: #"* */1 * * *"
+
+#Is required: 	No
+#Type: 	string
+#The Persistence-Volume-Claim (PVC) defining where the back-up data will be stored. A volume backed by a PVC is mounted on the path defined by "spec.backup.volumeMount" (see the next field).
+kubegres_backup_pvc_name: #my-backup-pvc
+
+#Is required: 	No
+#Type: 	string
+#The location where the backup is stored in the docker image. A volume is mounted on that path using the PVC name defined by "spec.database.pvcName" (see the previous field).
+kubegres_backup_volume_mount: #/var/lib/backup
+
+#Is required: 	No
+#Type: 	PodSecurityContext
+#A security context defines privilege and access control settings for a Pod or Container.
+kubegres_security_context:
+#    runAsNonRoot: true
+#    runAsUser: 999
+#    fsGroup: 999
+
+#Is required: 	No
+#Type: 	ResourceRequirements
+#It allows to define the resources requests/limits of CPU and Memory for the Postgres Pods.
+kubegres_resources:
+#  limits:
+#    memory: "4Gi"
+#    cpu: "1"
+#  requests:
+#    memory: "2Gi"
+#    cpu: "1"
+
+#Is required: 	No
+#Type: 	Affinity/Toleration
+#It allows setting custom Pod/Node affinity and Toleration policy.
+kubegres_scheduler:
+#    affinity:
+#        podAntiAffinity:
+#            preferredDuringSchedulingIgnoredDuringExecution:
+#                - weight: 100
+#                  podAffinityTerm:
+#                      labelSelector:
+#                          matchExpressions:
+#                              - key: app
+#                                operator: In
+#                                values:
+#                                    - postgres-name
+#                      topologyKey: "kubernetes.io/hostname"
+#    tolerations:
+#        - key: group
+#          operator: Equal
+#          value: critical
+#Is required: 	No
+#Type: 	Arrays of Volume
+#It allows declaring one or many volumes which can be mounted in the Postgres container(s).
+kubegres_volumes:
+#    volumes:
+#        - name: dshm
+#          emptyDir:
+#              medium: Memory
+#              sizeLimit: "600Mi"
+#
+#    volumeMounts:
+#        - mountPath: /dev/shm
+#          name: dshm
+#         - mountPath: /dev/anything
+#           name: anyMount
+#
+#    volumeClaimTemplates:
+#        name: anyMount
+#        spec:
+#            accessModes: [ "ReadWriteOnce" ]
+#            storageClassName: standard
+#            resources:
+#                requests:
+#                    storage: 1Gi
+
+#Is required: 	No
+#Type: 	Probe
+#Kubernetes uses liveness probes to know when to restart a container.
+#More details about LivenessProbe.
+kubegres_probe:
+#    livenessProbe:
+#        exec:
+#            command:
+#              - sh
+#              - -c
+#              - exec pg_isready -U postgres -h $POD_IP
+#        failureThreshold: 10
+#        initialDelaySeconds: 60
+#        periodSeconds: 20
+#        successThreshold: 1
+#        timeoutSeconds: 15
+#
+#    readinessProbe:
+#        exec:
+#            command:
+#                - sh
+#              - -c
+#              - exec pg_isready -U postgres -h $POD_IP
+#        failureThreshold: 3
+#        initialDelaySeconds: 5
+#        periodSeconds: 5
+#        successThreshold: 1
+#        timeoutSeconds: 3
+#Is required: 	Yes
+#Type: 	string
+#Required passwords for Postegras and Replica users.
+kubegres_env:
+    - name: POSTGRES_PASSWORD
+      value: fdafhkdjfd
+    - name: POSTGRES_REPLICATION_PASSWORD
+      value: dfdf
